@@ -206,3 +206,83 @@ app.get("/event/:id", async (req, res) => {
   res.send(result);
 });
 
+// Update event (private, only creator)
+app.patch("/event/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).send({ msg: "Invalid event id" });
+  }
+
+  const event = await eventCollection.findOne({ _id: new ObjectId(id) });
+  if (!event) {
+    return res.status(404).send({ msg: "Event not found" });
+  }
+  if (event.creatorEmail !== req.user.email) {
+    return res
+      .status(403)
+      .send({ msg: "You can only update your own events" });
+  }
+
+  const error = validateEvent(req.body);
+  if (error) {
+    return res.status(400).send({ msg: error });
+  }
+
+  const { title, description, eventType, thumbnail, location, eventDate } =
+    req.body;
+
+  const updatedData = {
+    title: title.trim(),
+    description: description.trim(),
+    eventType,
+    thumbnail: thumbnail.trim(),
+    location: location.trim(),
+    eventDate: new Date(eventDate),
+    updatedAt: new Date(),
+  };
+
+  const result = await eventCollection.updateOne(
+    { _id: event._id },
+    { $set: updatedData },
+  );
+
+  // keep joined events data in sync
+  await joinedCollection.updateMany(
+    { eventId: event._id },
+    {
+      $set: {
+        title: updatedData.title,
+        thumbnail: updatedData.thumbnail,
+        location: updatedData.location,
+        eventType: updatedData.eventType,
+        eventDate: updatedData.eventDate,
+      },
+    },
+  );
+
+  res.json(result);
+});
+
+// Delete event (private, only creator)
+app.delete("/event/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).send({ msg: "Invalid event id" });
+  }
+
+  const event = await eventCollection.findOne({ _id: new ObjectId(id) });
+  if (!event) {
+    return res.status(404).send({ msg: "Event not found" });
+  }
+  if (event.creatorEmail !== req.user.email) {
+    return res
+      .status(403)
+      .send({ msg: "You can only delete your own events" });
+  }
+
+  const result = await eventCollection.deleteOne({ _id: event._id });
+  await joinedCollection.deleteMany({ eventId: event._id });
+  res.json(result);
+});
+
+

@@ -173,7 +173,7 @@ app.get("/events", async (req, res) => {
   res.send(result);
 });
 
-// 6 recent upcoming events for home page (public)
+
 app.get("/featured-events", async (req, res) => {
   const result = await eventCollection
     .find({ eventDate: { $gte: new Date() } })
@@ -183,7 +183,7 @@ app.get("/featured-events", async (req, res) => {
   res.send(result);
 });
 
-// Events created by the logged-in user (private)
+
 app.get("/my-events", verifyToken, async (req, res) => {
   const result = await eventCollection
     .find({ creatorEmail: req.user.email })
@@ -192,7 +192,7 @@ app.get("/my-events", verifyToken, async (req, res) => {
   res.send(result);
 });
 
-// Event details (public)
+
 app.get("/event/:id", async (req, res) => {
   const { id } = req.params;
   if (!isValidId(id)) {
@@ -206,7 +206,7 @@ app.get("/event/:id", async (req, res) => {
   res.send(result);
 });
 
-// Update event (private, only creator)
+
 app.patch("/event/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   if (!isValidId(id)) {
@@ -263,7 +263,7 @@ app.patch("/event/:id", verifyToken, async (req, res) => {
   res.json(result);
 });
 
-// Delete event (private, only creator)
+
 app.delete("/event/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   if (!isValidId(id)) {
@@ -285,7 +285,7 @@ app.delete("/event/:id", verifyToken, async (req, res) => {
   res.json(result);
 });
 
-// ---------- Join APIs ----------
+
 
 // Join an event (private)
 app.post("/join-event/:id", verifyToken, async (req, res) => {
@@ -329,7 +329,7 @@ app.post("/join-event/:id", verifyToken, async (req, res) => {
   }
 });
 
-// Has the logged-in user joined this event? (private)
+
 app.get("/join-status/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   if (!isValidId(id)) {
@@ -352,7 +352,7 @@ app.get("/joined-events", verifyToken, async (req, res) => {
   res.send(result);
 });
 
-// ---------- Misc ----------
+
 
 app.get("/", (req, res) => {
   res.send({ message: "Server is running fine!" });

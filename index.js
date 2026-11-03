@@ -95,3 +95,60 @@ const validateEvent = (body = {}) => {
   return null;
 };
 
+// ---------- JWT middleware ----------
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ msg: "Unauthorized!" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ msg: "Unauthorized!" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    if (!payload.email) {
+      return res.status(403).send({ msg: "Forbidden!" });
+    }
+    req.user = payload; // email, name, image etc.
+    next();
+  } catch (error) {
+    return res.status(401).send({ msg: "Invalid or expired token!" });
+  }
+};
+
+// ---------- Event APIs ----------
+
+// Create event (private)
+app.post("/add-event", verifyToken, async (req, res) => {
+  const error = validateEvent(req.body);
+  if (error) {
+    return res.status(400).send({ msg: error });
+  }
+
+  const { title, description, eventType, thumbnail, location, eventDate } =
+    req.body;
+
+  const newEvent = {
+    title: title.trim(),
+    description: description.trim(),
+    eventType,
+    thumbnail: thumbnail.trim(),
+    location: location.trim(),
+    eventDate: new Date(eventDate),
+    creatorEmail: req.user.email,
+    creatorName: req.user.name,
+    participants: 0,
+    createdAt: new Date(),
+  };
+
+  const result = await eventCollection.insertOne(newEvent);
+  res.status(201).send(result);
+});
+

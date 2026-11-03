@@ -285,4 +285,70 @@ app.delete("/event/:id", verifyToken, async (req, res) => {
   res.json(result);
 });
 
+// ---------- Join APIs ----------
+
+// Join an event (private)
+app.post("/join-event/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).send({ msg: "Invalid event id" });
+  }
+
+  const event = await eventCollection.findOne({ _id: new ObjectId(id) });
+  if (!event) {
+    return res.status(404).send({ msg: "Event not found" });
+  }
+  if (new Date(event.eventDate) < new Date()) {
+    return res.status(400).send({ msg: "This event has already ended" });
+  }
+
+  try {
+    const result = await joinedCollection.insertOne({
+      eventId: event._id,
+      title: event.title,
+      thumbnail: event.thumbnail,
+      location: event.location,
+      eventType: event.eventType,
+      eventDate: event.eventDate,
+      userEmail: req.user.email,
+      userName: req.user.name,
+      joinedAt: new Date(),
+    });
+
+    await eventCollection.updateOne(
+      { _id: event._id },
+      { $inc: { participants: 1 } },
+    );
+
+    res.status(201).send(result);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).send({ msg: "You have already joined this event" });
+    }
+    throw err;
+  }
+});
+
+// Has the logged-in user joined this event? (private)
+app.get("/join-status/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).send({ msg: "Invalid event id" });
+  }
+
+  const joined = await joinedCollection.findOne({
+    eventId: new ObjectId(id),
+    userEmail: req.user.email,
+  });
+  res.send({ joined: Boolean(joined) });
+});
+
+// Joined events of the logged-in user, sorted by event date (private)
+app.get("/joined-events", verifyToken, async (req, res) => {
+  const result = await joinedCollection
+    .find({ userEmail: req.user.email })
+    .sort({ eventDate: 1 })
+    .toArray();
+  res.send(result);
+});
 

@@ -37,3 +37,61 @@ await joinedCollection.createIndex(
   { unique: true },
 );
 
+// ---------- Helpers ----------
+
+const EVENT_TYPES = [
+  "Cleanup",
+  "Plantation",
+  "Donation",
+  "Food Distribution",
+  "Health Camp",
+  "Blood Donation",
+  "Education",
+  "Other",
+];
+
+const isValidId = (id) => /^[a-f\d]{24}$/i.test(String(id));
+
+const isValidUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+// returns an error message (string) or null when everything is fine
+const validateEvent = (body = {}) => {
+  const { title, description, eventType, thumbnail, location, eventDate } =
+    body;
+
+  if (!title || title.trim().length < 5 || title.trim().length > 100) {
+    return "Title must be between 5 and 100 characters";
+  }
+  if (
+    !description ||
+    description.trim().length < 20 ||
+    description.trim().length > 2000
+  ) {
+    return "Description must be between 20 and 2000 characters";
+  }
+  if (!EVENT_TYPES.includes(eventType)) {
+    return "Please select a valid event type";
+  }
+  if (!thumbnail || !isValidUrl(thumbnail.trim())) {
+    return "Please provide a valid thumbnail image URL";
+  }
+  if (!location || location.trim().length < 3) {
+    return "Location must be at least 3 characters long";
+  }
+  const date = new Date(eventDate);
+  if (!eventDate || Number.isNaN(date.getTime())) {
+    return "Please provide a valid event date";
+  }
+  if (date <= new Date()) {
+    return "Event date must be in the future";
+  }
+  return null;
+};
+

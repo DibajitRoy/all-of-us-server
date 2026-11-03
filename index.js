@@ -352,3 +352,19 @@ app.get("/joined-events", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// ---------- Misc ----------
+
+app.get("/", (req, res) => {
+  res.send({ message: "Server is running fine!" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send({ msg: "Something went wrong on the server" });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running at ${PORT}`);
+});
+
+export default app;

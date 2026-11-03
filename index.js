@@ -37,7 +37,7 @@ await joinedCollection.createIndex(
   { unique: true },
 );
 
-// ---------- Helpers ----------
+
 
 const EVENT_TYPES = [
   "Cleanup",
@@ -61,7 +61,7 @@ const isValidUrl = (value) => {
   }
 };
 
-// returns an error message (string) or null when everything is fine
+
 const validateEvent = (body = {}) => {
   const { title, description, eventType, thumbnail, location, eventDate } =
     body;
@@ -95,7 +95,6 @@ const validateEvent = (body = {}) => {
   return null;
 };
 
-// ---------- JWT middleware ----------
 
 const JWKS = createRemoteJWKSet(
   new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
@@ -123,9 +122,6 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-// ---------- Event APIs ----------
-
-// Create event (private)
 app.post("/add-event", verifyToken, async (req, res) => {
   const error = validateEvent(req.body);
   if (error) {
@@ -152,7 +148,7 @@ app.post("/add-event", verifyToken, async (req, res) => {
   res.status(201).send(result);
 });
 
-// All upcoming events (public) - supports ?type=Cleanup&search=mirpur
+
 app.get("/events", async (req, res) => {
   const { type, search } = req.query;
   const filter = { eventDate: { $gte: new Date() } };

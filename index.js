@@ -152,3 +152,57 @@ app.post("/add-event", verifyToken, async (req, res) => {
   res.status(201).send(result);
 });
 
+// All upcoming events (public) - supports ?type=Cleanup&search=mirpur
+app.get("/events", async (req, res) => {
+  const { type, search } = req.query;
+  const filter = { eventDate: { $gte: new Date() } };
+
+  if (type && type !== "all") {
+    filter.eventType = type;
+  }
+  if (search) {
+    const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safe, "i");
+    filter.$or = [{ title: regex }, { location: regex }];
+  }
+
+  const result = await eventCollection
+    .find(filter)
+    .sort({ eventDate: 1 })
+    .toArray();
+  res.send(result);
+});
+
+// 6 recent upcoming events for home page (public)
+app.get("/featured-events", async (req, res) => {
+  const result = await eventCollection
+    .find({ eventDate: { $gte: new Date() } })
+    .sort({ eventDate: 1 })
+    .limit(6)
+    .toArray();
+  res.send(result);
+});
+
+// Events created by the logged-in user (private)
+app.get("/my-events", verifyToken, async (req, res) => {
+  const result = await eventCollection
+    .find({ creatorEmail: req.user.email })
+    .sort({ eventDate: 1 })
+    .toArray();
+  res.send(result);
+});
+
+// Event details (public)
+app.get("/event/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).send({ msg: "Invalid event id" });
+  }
+
+  const result = await eventCollection.findOne({ _id: new ObjectId(id) });
+  if (!result) {
+    return res.status(404).send({ msg: "Event not found" });
+  }
+  res.send(result);
+});
+

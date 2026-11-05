@@ -2,8 +2,10 @@
 
 REST API for the **All of Us** social service events platform, built with Express.js and MongoDB.
 
-**Live API:** [https://all-of-us-server.vercel.app](https://all-of-us-server.vercel.app)
+**Live API:** [https://all-of-us-server-yov1.vercel.app](https://all-of-us-server-yov1.vercel.app)
+
 **Live Client:** [https://all-of-us-client.vercel.app](https://all-of-us-client.vercel.app)
+
 **Client Repository:** [all-of-us-client](https://github.com/DibajitRoy/all-of-us-client)
 
 ---
@@ -12,7 +14,7 @@ REST API for the **All of Us** social service events platform, built with Expres
 
 - JWT-protected private routes, verified against the client's Better Auth JWKS endpoint
 - Create, update and delete events, restricted to the user who created them
-- Server-side validation: title, description, event type, image URL, location and a future event date
+- Server-side validation for title, description, event type, image URL, location and a future event date
 - Upcoming events only: events whose date has passed are never returned
 - Search by title or location and filter by event type
 - Join an event once per user, with an automatic participant count
@@ -33,7 +35,7 @@ REST API for the **All of Us** social service events platform, built with Expres
 | PATCH | `/event/:id` | Private (creator only) | Update an event |
 | DELETE | `/event/:id` | Private (creator only) | Delete an event |
 | POST | `/join-event/:id` | Private | Join an event |
-| GET | `/join-status/:id` | Private | Check whether the user has joined |
+| GET | `/join-status/:id` | Private | Check whether the user has joined an event |
 | GET | `/joined-events` | Private | Events joined by the user, sorted by date |
 
 Private routes expect an `Authorization: Bearer <token>` header.
@@ -55,7 +57,7 @@ npm install
 node index.js
 ```
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 MONGODB_URI=your_mongodb_connection_string
@@ -63,3 +65,9 @@ CLIENT_URL=http://localhost:3000
 ```
 
 `CLIENT_URL` must be the URL of the client app, because the server fetches its public keys from `CLIENT_URL/api/auth/jwks` to verify tokens.
+
+---
+
+## Deployment
+
+The server is deployed on Vercel. Set `MONGODB_URI` and `CLIENT_URL` (the live client URL) in the Vercel project settings.
